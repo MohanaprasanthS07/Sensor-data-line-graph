@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Sensor Data Graphs</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<center>
+       <style>
+	    
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+                p {
+            background-color: #151111;
+            color: #ecf901;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+
+h1 {
+        animation: blinking 5s infinite;
+    }
+
+    @keyframes blinking {
+        0% { color: red; }
+        50% { color: rgb(0, 0, 0); }
+        25% { color: rgb(124, 128, 0); }
+        75% { color: orange; }
+        100% { color: purple; }
+    }
+
+
+        body {
+            background-color: grey;
+        }
+        button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: rgb(28, 18, 223);
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button.refresh {
+            background-color: #f44336; /* Red */
+        }
+
+        /* Glowing effect animation */
+        @keyframes glowing {
+            0% { box-shadow: 0 0 5px #cb8809; }
+            50% { box-shadow: 0 0 20px #4CAF50; }
+            100% { box-shadow: 0 0 5px #4CAF50; }
+        }
+
+        /* Apply glowing effect on hover */
+        button:hover {
+            animation: glowing 1s infinite;
+        }
+
+        .medium-box {
+            width: 400px;
+            height: 200px;
+            border: 1px solid rgb(249, 0, 0);
+            margin: 10px;
+            padding: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 100%;
+            width: 100%;
+        }
+
+        canvas {
+            background-color: rgb(230, 235, 224);
+            height: 100%;
+            width: 100%;
+        }
+
+        .custom-loader {
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            transform: translate(-50%, -50%);
+            border: 20px solid #f3f3f3;
+            border-top: 20px solid #03ff1c;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+
+        }
+        .marquee {
+            background-color: #14181b; /* Blue */
+            color: #FFFFFF; /* White */
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+
+        .alert {
+  padding: 10px;
+  background-color: #e1d307;
+  color: rgb(7, 18, 217);
+}
+
+.closebtn {
+  margin-left: 15px;
+  color: rgb(5, 4, 13);
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.closebtn:hover {
+  color: black;
+}
+     
+    </style>
+</head>
+<body>
+    
+    
+    <div class="marquee">
+        <marquee>
+            THANKS FOR CHOOSING THIS SITE _ THIS SITE IS LICENSED BY ADMIN  _ VISIT ADMIN PAGE FOR MORE INFORMATION !!!
+        </marquee>
+    </div>
+    <div class="alert">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
+        <strong>USE PC / DESKTOP / DESKTOP SITE VERSION FOR BETTER VIEW</strong> 
+      </div>
+    <a href="USAGE.html">
+        <button style="text-decoration: none; color: #fefefe; background-color: #7067d8; padding: 5px 10px; border-radius: 5px; box-shadow: 0 0 10px #ff00ff; display: inline-block;">METHOD TO USE THIS SITE</button>
+      </a>
+      <BR>
+      
+      <a href="admin.html">
+        <button style="text-decoration: none; color: #fefefe; background-color: #7067d8; padding: 5px 10px; border-radius: 5px; box-shadow: 0 0 10px #ff00ff; display: inline-block;">ADMIN PAGE</button>
+      </a>
+
+    <center><h1><u>SENSOR DATA GRAPHS</u></h1></center>
+    
+    <input type="file" id="fileInput">
+    <button onclick="generateGraphs()">Generate Graphs</button> 
+   <right> <button onclick="refreshPage()">Remove Data</button> </right>
+   
+    <div class="chart-container">
+        <div class="medium-box">
+            <canvas id="temperatureChart" width="400" height="200"></canvas>
+        </div>
+        <div class="medium-box">
+            <canvas id="humidityChart" width="400" height="200"></canvas>
+        </div>
+        <div class="medium-box">
+            <canvas id="mq4Chart" width="400" height="200"></canvas>
+        </div>
+        <div class="medium-box">
+            <canvas id="oxygenChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="medium-box">
+    <canvas id="mq7Chart" width="400" height="200"></canvas>
+</div>
+
+   
+
+<script>
+    
+
+    function refreshPage() {
+            location.reload(); // Reload the page
+        }
+    function generateGraphs() {
+        var fileInput = document.getElementById('fileInput');
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+        reader.onload = function(event) {
+            var content = event.target.result;
+            var lines = content.split('\n');
+            var labels = [];
+            var temperatureData = [];
+            var humidityData = [];
+            var mq4Data = [];
+            var oxygenData = [];
+            var mq7Data = []; // Added MQ7 data array
+
+            for (var i = 1; i < lines.length; i++) {
+                var line = lines[i].split(',');
+                labels.push(i);
+                temperatureData.push(parseFloat(line[0]));
+                humidityData.push(parseFloat(line[1]));
+                mq4Data.push(parseFloat(line[2]));
+                oxygenData.push(parseFloat(line[3]));
+                mq7Data.push(parseFloat(line[4])); // Added MQ7 data
+            }
+
+            showLoader(); // Show the loader
+            setTimeout(function() {
+                createChart('temperatureChart', 'Temperature (°C)', labels, temperatureData);
+                createChart('humidityChart', 'Humidity (%)', labels, humidityData);
+                createChart('mq4Chart', 'Methane Reading', labels, mq4Data);
+                createChart('oxygenChart', 'Oxygen Reading', labels, oxygenData);
+                createChart('mq7Chart', 'CarbonMonoxide Reading', labels, mq7Data); // Added MQ7 chart
+                hideLoader(); // Hide the loader after 10 seconds
+            }, 4000); // Delay the result for 10 seconds
+        }
+        reader.readAsText(file);
+    }
+
+    function createChart(chartId, yAxisLabel, labels, data) {
+    var ctx = document.getElementById(chartId).getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: yAxisLabel,
+                data: data,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                pointRadius: 4,
+                fill: false
+            }]
+        },
+        options: {
+            plugins: {
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: function(value) {
+                        return value.toFixed(1);
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'Data Point'
+                    },
+                    grid: {
+                        drawBorder: false,
+                        drawOnChartArea: false,
+                        drawTicks: true
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: yAxisLabel
+                    },
+                    grid: {
+                        drawBorder: false,
+                        drawOnChartArea: false,
+                        drawTicks: true
+                    },
+                    ticks: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+    function showLoader() {
+        var loader = document.createElement('div');
+        loader.className = 'custom-loader';
+        document.body.appendChild(loader);
+    }
+
+    function hideLoader() {
+        var loader = document.querySelector('.custom-loader');
+        if (loader) {
+            loader.parentNode.removeChild(loader);
+        }
+    }
+	
+</script>
+  
+<p> Site Version V-1.00 Stable release<br>&copy; 2023 All rights reserved by Admin</p>
+</center>
+
+</body>
+
+
+
+</html>
